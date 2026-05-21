@@ -6,8 +6,12 @@
     class="[&_[role='tab']]:px-0 [&_[role='tablist']]:px-5 [&_[role='tablist']]:gap-7.5 [&_[role='tablist']]:flex-shrink-0 [&_[role='tabpanel'][data-state='active']]:flex-1"
   >
     <template #tab-panel="{ tab }">
+      <TicketTimesheetTab
+        v-if="tab.name === 'timesheet'"
+        :ticket-id="String(ticket.doc?.name)"
+      />
       <TicketAgentActivities
-        v-if="Boolean(activities.data)"
+        v-else-if="Boolean(activities.data)"
         ref="ticketAgentActivitiesRef"
         :activities="filterActivities(tab.name as TicketTab)"
         :title="tab.label"
@@ -55,6 +59,8 @@ import {
   EmailIcon,
   PhoneIcon,
 } from "@/components/icons";
+import DurationIcon from "@/components/icons/DurationIcon.vue";
+import TicketTimesheetTab from "./TicketTimesheetTab.vue";
 import { useActiveTabManager } from "@/composables/useActiveTabManager";
 import { useTelephonyStore } from "@/stores/telephony";
 import {
@@ -97,6 +103,11 @@ const tabs: ComputedRef<TabObject[]> = computed(() => {
       name: "comment",
       label: "Comments",
       icon: CommentIcon,
+    },
+    {
+      name: "timesheet",
+      label: "Zeiterfassung",
+      icon: DurationIcon,
     },
   ];
 
