@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col flex-1 overflow-y-auto px-5 py-4 gap-5">
-    <!-- Soll / Ist -->
+    <!-- Plan / Ist -->
     <div class="flex items-center gap-8 flex-shrink-0">
       <div class="flex flex-col">
         <span class="text-xs text-ink-gray-5">Ist-Stunden</span>
@@ -9,7 +9,7 @@
         </span>
       </div>
       <div class="flex flex-col">
-        <span class="text-xs text-ink-gray-5">Soll-Stunden</span>
+        <span class="text-xs text-ink-gray-5">Plan-Stunden</span>
         <div class="flex items-center gap-2">
           <input
             v-model.number="plannedInput"
@@ -206,7 +206,7 @@ function savePlanned() {
     { ticket: props.ticketId, hours: plannedInput.value || 0 },
     {
       onSuccess: () => {
-        toast.success("Soll-Stunden gespeichert.");
+        toast.success("Plan-Stunden gespeichert.");
         timesheets.reload();
       },
       onError: (e: any) => toast.error(errMsg(e)),
