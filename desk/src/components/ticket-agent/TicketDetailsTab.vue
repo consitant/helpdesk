@@ -13,8 +13,40 @@
           "
         >
           <template v-for="field in section.fields">
+            <!-- Two-step Top/Sub UI for ticket_type (Axovend Hierarchie) -->
+            <template v-if="field.fieldname === 'ticket_type' && field.visible">
+              <Link
+                :key="'ticket_type_top'"
+                class="form-control-core"
+                id="ticket_type_top"
+                :class="section.group ? 'flex-1 min-w-0' : 'w-full'"
+                :page-length="20"
+                :label="__('Kategorie')"
+                :placeholder="__('Kategorie wählen')"
+                doctype="HD Ticket Type"
+                :filters="{ parent_ticket_type: ['is', 'not set'] }"
+                :modelValue="topLevelTicketType"
+                @update:model-value="onTopLevelChange"
+              />
+              <Link
+                :key="'ticket_type'"
+                :ref="(el) => setFieldRef(field.fieldname, el)"
+                class="form-control-core"
+                :id="field.fieldname"
+                :class="section.group ? 'flex-1 min-w-0' : 'w-full'"
+                :page-length="20"
+                :label="__('Unter-Kategorie')"
+                :placeholder="topLevelTicketType ? __('Unter-Kategorie wählen') : __('Erst Kategorie wählen')"
+                doctype="HD Ticket Type"
+                :filters="subTypeFilters"
+                :modelValue="subTypeValue"
+                :required="field.required"
+                :disabled="!topLevelTicketType"
+                @update:model-value="(val:string) => handleSubTypeChange(val)"
+              />
+            </template>
             <Link
-              v-if="field.visible"
+              v-else-if="field.visible"
               :key="field.fieldname"
               :ref="(el) => setFieldRef(field.fieldname, el)"
               class="form-control-core"
@@ -155,8 +187,8 @@ import {
   TicketSymbol,
 } from "@/types";
 import dayjs from "dayjs";
-import { Tooltip } from "frappe-ui";
-import { computed, inject, ref } from "vue";
+import { Tooltip, createResource } from "frappe-ui";
+import { computed, inject, ref, watch } from "vue";
 import LucideChevronRight from "~icons/lucide/chevron-right";
 import Section from "../Section.vue";
 import TicketField from "../TicketField.vue";
@@ -328,6 +360,104 @@ function handleFieldUpdate(
     //show error toast
   );
 }
+
+// --- Two-step ticket_type (Axovend) ---
+const topLevelTicketType = ref<string>("");
+// Cache: ticket_type name -> parent_ticket_type (or "" if top-level)
+const parentCache = ref<Record<string, string>>({});
+
+const subTypeValue = computed(() => {
+  const v = ticket.value?.doc?.ticket_type || "";
+  // If ticket_type equals the chosen top, the sub field should display empty.
+  if (v && v === topLevelTicketType.value) return "";
+  return v;
+});
+
+const subTypeFilters = computed(() => {
+  if (!topLevelTicketType.value) {
+    // No top selected: show nothing (impossible filter)
+    return { parent_ticket_type: ["=", "__none__"] };
+  }
+  return { parent_ticket_type: topLevelTicketType.value };
+});
+
+const parentLookup = createResource({
+  url: "frappe.client.get_value",
+  makeParams: (args: any) => ({
+    doctype: "HD Ticket Type",
+    filters: { name: args.name },
+    fieldname: "parent_ticket_type",
+  }),
+});
+
+async function resolveParent(typeName: string): Promise<string> {
+  if (!typeName) return "";
+  if (typeName in parentCache.value) return parentCache.value[typeName];
+  try {
+    const res = await parentLookup.submit({ name: typeName });
+    // frappe.client.get_value returns {parent_ticket_type: "..."} either directly
+    // or wrapped in {message: {...}}. Handle both.
+    const payload = (res && (res.message ?? res)) || {};
+    const parent = (payload?.parent_ticket_type as string) || "";
+    parentCache.value[typeName] = parent;
+    return parent;
+  } catch (e) {
+    return "";
+  }
+}
+
+// Initialise / sync topLevel from current ticket_type
+async function syncTopFromTicketType(typeName: string) {
+  if (!typeName) {
+    topLevelTicketType.value = "";
+    return;
+  }
+  const parent = await resolveParent(typeName);
+  // If type has a parent, that parent is the top. Otherwise the type itself is top.
+  topLevelTicketType.value = parent || typeName;
+}
+
+watch(
+  () => ticket.value?.doc?.ticket_type,
+  (val) => {
+    syncTopFromTicketType(val || "");
+  },
+  { immediate: true }
+);
+
+function onTopLevelChange(val: string) {
+  if (val === topLevelTicketType.value) return;
+  topLevelTicketType.value = val || "";
+  const currentSub = ticket.value?.doc?.ticket_type;
+  if (!val) {
+    // Top cleared → clear ticket_type
+    if (currentSub) handleFieldUpdate("ticket_type", "", true);
+    return;
+  }
+  // Determine whether the new top has any sub-types. If not, set ticket_type=top.
+  // Either way, if the current sub-type does not belong to this top, replace it
+  // with the top itself (acts as default; user can pick a sub afterwards).
+  if (!currentSub) {
+    handleFieldUpdate("ticket_type", val, true);
+    parentCache.value[val] = "";
+    return;
+  }
+  resolveParent(currentSub).then((parent) => {
+    const effectiveTop = parent || currentSub;
+    if (effectiveTop !== val) {
+      // Sub-type no longer matches → fall back to top as default value.
+      handleFieldUpdate("ticket_type", val, true);
+      parentCache.value[val] = "";
+    }
+  });
+}
+
+function handleSubTypeChange(val: string) {
+  // Cache parent for new value
+  if (val) parentCache.value[val] = topLevelTicketType.value || "";
+  handleFieldUpdate("ticket_type", val, true);
+}
+// --- end two-step ticket_type ---
 
 const fieldRefs = ref<Record<string, any>>({});
 
