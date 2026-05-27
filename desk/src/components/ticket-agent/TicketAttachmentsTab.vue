@@ -177,5 +177,3 @@ async function onFileSelected(e: Event) {
   }
 }
 </script>
-</content>
-</invoke>
