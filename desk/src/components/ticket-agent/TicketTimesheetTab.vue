@@ -41,11 +41,14 @@
           <FormControl v-model="form.from_time" type="time" label="Von" />
           <FormControl v-model="form.to_time" type="time" label="Bis" />
         </div>
-        <div class="flex flex-col gap-1">
+        <!-- Felder DL-Artikel + Abrechnungskategorie im SPA ausgeblendet (axovend):
+             werden erst beim Verbuchen/Abrechnen in ERPNext gepflegt. Backend-Logik bleibt erhalten. -->
+        <div v-if="false" class="flex flex-col gap-1">
           <span class="text-xs text-ink-gray-5">Dienstleistungs-Artikel</span>
           <Link doctype="Item" :value="form.service_item" @change="(v) => (form.service_item = v)" />
         </div>
         <FormControl
+          v-if="false"
           v-model="form.billing_category"
           type="select"
           label="Abrechnungskategorie"
