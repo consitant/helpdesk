@@ -10,6 +10,10 @@
         v-if="tab.name === 'timesheet'"
         :ticket-id="String(ticket.doc?.name)"
       />
+      <TicketAttachmentsTab
+        v-else-if="tab.name === 'attachments'"
+        :ticket-id="String(ticket.doc?.name)"
+      />
       <TicketAgentActivities
         v-else-if="Boolean(activities.data)"
         ref="ticketAgentActivitiesRef"
@@ -60,7 +64,9 @@ import {
   PhoneIcon,
 } from "@/components/icons";
 import DurationIcon from "@/components/icons/DurationIcon.vue";
+import AttachmentIcon from "@/components/icons/AttachmentIcon.vue";
 import TicketTimesheetTab from "./TicketTimesheetTab.vue";
+import TicketAttachmentsTab from "./TicketAttachmentsTab.vue";
 import { useActiveTabManager } from "@/composables/useActiveTabManager";
 import { useTelephonyStore } from "@/stores/telephony";
 import {
@@ -108,6 +114,11 @@ const tabs: ComputedRef<TabObject[]> = computed(() => {
       name: "timesheet",
       label: "Zeiterfassung",
       icon: DurationIcon,
+    },
+    {
+      name: "attachments",
+      label: "Anlagen",
+      icon: AttachmentIcon,
     },
   ];
 

@@ -387,7 +387,8 @@ export type TicketTab =
   | "comment"
   | "details"
   | "call"
-  | "timesheet";
+  | "timesheet"
+  | "attachments";
 
 export interface TabObject {
   name: TicketTab;
