@@ -10,7 +10,7 @@
       </div>
       <div class="flex flex-col">
         <span class="text-xs text-ink-gray-5">Plan-Stunden</span>
-        <div class="flex items-center gap-2">
+        <div v-if="canEditPlanned" class="flex items-center gap-2">
           <input
             v-model.number="plannedInput"
             type="number"
@@ -23,6 +23,29 @@
             size="sm"
             :loading="plannedResource.loading"
             @click="savePlanned"
+          />
+        </div>
+        <span v-else class="text-lg font-semibold text-ink-gray-9">
+          {{ formatHours(data?.planned_hours) }}
+        </span>
+      </div>
+
+      <!-- Fortschritt: nur wenn Plan-Stunden gesetzt -->
+      <div v-if="plannedTotal > 0" class="flex flex-col flex-1 min-w-[180px] max-w-xs gap-1">
+        <div class="flex justify-between text-xs">
+          <span class="text-ink-gray-5">Fortschritt</span>
+          <span
+            :class="isOver ? 'text-ink-red-4 font-semibold' : 'text-ink-gray-7'"
+          >
+            {{ formatHours(data?.total_hours) }} / {{ formatHours(plannedTotal) }} Std.
+            ({{ progressPercent }}%)
+          </span>
+        </div>
+        <div class="h-2 w-full rounded bg-surface-gray-2 overflow-hidden">
+          <div
+            class="h-full rounded transition-all"
+            :class="isOver ? 'bg-surface-red-4' : 'bg-surface-gray-7'"
+            :style="{ width: progressBarWidth + '%' }"
           />
         </div>
       </div>
@@ -111,8 +134,12 @@
 <script setup lang="ts">
 import { Badge, Button, FormControl, createResource, toast } from "frappe-ui";
 import { computed, reactive, ref, watch } from "vue";
+import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps<{ ticketId: string }>();
+
+const auth = useAuthStore();
+const canEditPlanned = computed(() => !!auth.isManager);
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -136,6 +163,15 @@ const timesheets = createResource({
   },
 });
 const data = computed(() => timesheets.data);
+
+const plannedTotal = computed(() => Number(data.value?.planned_hours) || 0);
+const actualTotal = computed(() => Number(data.value?.total_hours) || 0);
+const progressPercent = computed(() => {
+  if (plannedTotal.value <= 0) return 0;
+  return Math.round((actualTotal.value / plannedTotal.value) * 100);
+});
+const progressBarWidth = computed(() => Math.min(progressPercent.value, 100));
+const isOver = computed(() => progressPercent.value > 100);
 
 watch(
   () => props.ticketId,
