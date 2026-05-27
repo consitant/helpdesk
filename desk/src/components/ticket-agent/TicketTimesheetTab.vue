@@ -41,19 +41,6 @@
           <FormControl v-model="form.from_time" type="time" label="Von" />
           <FormControl v-model="form.to_time" type="time" label="Bis" />
         </div>
-        <!-- Felder DL-Artikel + Abrechnungskategorie im SPA ausgeblendet (axovend):
-             werden erst beim Verbuchen/Abrechnen in ERPNext gepflegt. Backend-Logik bleibt erhalten. -->
-        <div v-if="false" class="flex flex-col gap-1">
-          <span class="text-xs text-ink-gray-5">Dienstleistungs-Artikel</span>
-          <Link doctype="Item" :value="form.service_item" @change="(v) => (form.service_item = v)" />
-        </div>
-        <FormControl
-          v-if="false"
-          v-model="form.billing_category"
-          type="select"
-          label="Abrechnungskategorie"
-          :options="billingOptions"
-        />
       </div>
       <FormControl
         v-model="form.description"
@@ -122,19 +109,10 @@
 </template>
 
 <script setup lang="ts">
-import { Link } from "@/components";
 import { Badge, Button, FormControl, createResource, toast } from "frappe-ui";
 import { computed, reactive, ref, watch } from "vue";
 
 const props = defineProps<{ ticketId: string }>();
-
-const billingOptions = [
-  { label: "—", value: "" },
-  { label: "Abgerechnet", value: "Abgerechnet" },
-  { label: "Gegen Vertrag", value: "Gegen Vertrag" },
-  { label: "Kulanz", value: "Kulanz" },
-  { label: "Garantie", value: "Garantie" },
-];
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -144,8 +122,6 @@ const form = reactive({
   activity_date: today(),
   from_time: "",
   to_time: "",
-  service_item: "",
-  billing_category: "",
   description: "",
 });
 
@@ -175,18 +151,16 @@ const plannedResource = createResource({
 });
 
 function submit() {
-  if (!form.service_item || !form.from_time || !form.to_time) {
-    toast.error("Bitte Artikel, Von- und Bis-Zeit ausfüllen.");
+  if (!form.from_time || !form.to_time) {
+    toast.error("Bitte Von- und Bis-Zeit ausfüllen.");
     return;
   }
   logResource.submit(
     {
       ticket: props.ticketId,
-      service_item: form.service_item,
       activity_date: form.activity_date,
       from_time: form.from_time,
       to_time: form.to_time,
-      billing_category: form.billing_category,
       description: form.description,
     },
     {
@@ -194,8 +168,6 @@ function submit() {
         toast.success((r && r.message) || "Zeit gebucht.");
         form.from_time = "";
         form.to_time = "";
-        form.service_item = "";
-        form.billing_category = "";
         form.description = "";
         timesheets.reload();
       },
