@@ -17,43 +17,13 @@
             <template v-if="field.fieldname === 'ticket_type' && field.visible">
               <div
                 :key="'ticket_type_picker'"
-                class="flex flex-col gap-2"
                 :class="section.group ? 'flex-1 min-w-0' : 'w-full'"
               >
-                <FormControl
-                  id="ticket_art"
-                  type="select"
-                  class="form-control-core form-control-core-select w-full"
-                  :label="__('Ticket-Art')"
-                  :options="ticketArtOptions"
-                  :modelValue="ticketArt"
-                  @update:model-value="(val:string) => onTicketArtChange(val)"
-                />
-                <Link
-                  class="form-control-core w-full"
-                  id="ticket_type_top"
-                  :page-length="20"
-                  :label="__('Kategorie')"
-                  :placeholder="ticketArt ? __('Kategorie wählen') : __('Erst Ticket-Art wählen')"
-                  doctype="HD Ticket Type"
-                  :filters="topLevelFilters"
-                  :modelValue="topLevelTicketType"
-                  :disabled="!ticketArt"
-                  @update:model-value="onTopLevelChange"
-                />
-                <Link
-                  :ref="(el) => setFieldRef(field.fieldname, el)"
-                  class="form-control-core w-full"
-                  :id="field.fieldname"
-                  :page-length="20"
-                  :label="__('Unter-Kategorie')"
-                  :placeholder="topLevelTicketType ? __('Unter-Kategorie wählen') : __('Erst Kategorie wählen')"
-                  doctype="HD Ticket Type"
-                  :filters="subTypeFilters"
-                  :modelValue="subTypeValue"
+                <TicketTypeHierarchyPicker
+                  :modelValue="field.value as string"
+                  :ticketArtValue="(ticket.value?.doc as any)?.custom_ticket_art || ''"
                   :required="field.required"
-                  :disabled="!topLevelTicketType"
-                  @update:model-value="(val:string) => handleSubTypeChange(val)"
+                  @update:modelValue="(val:string) => handleFieldUpdate('ticket_type', val, true)"
                 />
               </div>
             </template>
@@ -185,6 +155,7 @@
 
 <script setup lang="ts">
 import { Link } from "@/components";
+import TicketTypeHierarchyPicker from "./TicketTypeHierarchyPicker.vue";
 import { parseField } from "@/composables/formCustomisation";
 import { useNotifyTicketUpdate } from "@/composables/realtime";
 import { useShortcut } from "@/composables/shortcuts";
@@ -199,8 +170,8 @@ import {
   TicketSymbol,
 } from "@/types";
 import dayjs from "dayjs";
-import { FormControl, Tooltip, createResource } from "frappe-ui";
-import { computed, inject, ref, watch } from "vue";
+import { Tooltip } from "frappe-ui";
+import { computed, inject, ref } from "vue";
 import LucideChevronRight from "~icons/lucide/chevron-right";
 import Section from "../Section.vue";
 import TicketField from "../TicketField.vue";
@@ -373,172 +344,6 @@ function handleFieldUpdate(
   );
 }
 
-// --- Three-step ticket_type (Axovend: Art → Kategorie → Unter-Kategorie) ---
-const ticketArt = ref<string>("");
-const topLevelTicketType = ref<string>("");
-// Cache: ticket_type name -> { parent: string, ticket_art: string }
-type TypeInfo = { parent: string; ticket_art: string };
-const typeInfoCache = ref<Record<string, TypeInfo>>({});
-
-const ticketArtOptions = [
-  { label: "", value: "" },
-  { label: "Intern", value: "Intern" },
-  { label: "Extern", value: "Extern" },
-];
-
-const subTypeValue = computed(() => {
-  const v = ticket.value?.doc?.ticket_type || "";
-  // If ticket_type equals the chosen top, the sub field should display empty.
-  if (v && v === topLevelTicketType.value) return "";
-  return v;
-});
-
-const topLevelFilters = computed(() => {
-  if (!ticketArt.value) {
-    // No art selected: show nothing (impossible filter)
-    return { parent_ticket_type: ["is", "not set"], ticket_art: ["=", "__none__"] };
-  }
-  return {
-    parent_ticket_type: ["is", "not set"],
-    ticket_art: ticketArt.value,
-  };
-});
-
-const subTypeFilters = computed(() => {
-  if (!topLevelTicketType.value) {
-    // No top selected: show nothing (impossible filter)
-    return { parent_ticket_type: ["=", "__none__"] };
-  }
-  return { parent_ticket_type: topLevelTicketType.value };
-});
-
-const typeLookup = createResource({
-  url: "frappe.client.get_value",
-  makeParams: (args: any) => ({
-    doctype: "HD Ticket Type",
-    filters: { name: args.name },
-    fieldname: ["parent_ticket_type", "ticket_art"],
-  }),
-});
-
-async function resolveTypeInfo(typeName: string): Promise<TypeInfo> {
-  if (!typeName) return { parent: "", ticket_art: "" };
-  if (typeName in typeInfoCache.value) return typeInfoCache.value[typeName];
-  try {
-    const res = await typeLookup.submit({ name: typeName });
-    // frappe.client.get_value returns the dict directly or wrapped in {message}.
-    const payload = (res && (res.message ?? res)) || {};
-    const info: TypeInfo = {
-      parent: (payload?.parent_ticket_type as string) || "",
-      ticket_art: (payload?.ticket_art as string) || "",
-    };
-    typeInfoCache.value[typeName] = info;
-    return info;
-  } catch (e) {
-    return { parent: "", ticket_art: "" };
-  }
-}
-
-async function resolveParent(typeName: string): Promise<string> {
-  return (await resolveTypeInfo(typeName)).parent;
-}
-
-// Initialise / sync ticketArt + topLevel from current ticket_type
-async function syncFromTicketType(typeName: string) {
-  if (!typeName) {
-    // Keep ticketArt as-is if doc has custom_ticket_art set (allows user to start fresh)
-    const docArt = (ticket.value?.doc as any)?.custom_ticket_art || "";
-    ticketArt.value = docArt || "";
-    topLevelTicketType.value = "";
-    return;
-  }
-  const info = await resolveTypeInfo(typeName);
-  // If type has a parent, that parent is the top. Otherwise the type itself is top.
-  const top = info.parent || typeName;
-  topLevelTicketType.value = top;
-  // ticket_art: prefer the type's value; fall back to doc.custom_ticket_art.
-  let art = info.ticket_art;
-  if (!art && info.parent) {
-    const parentInfo = await resolveTypeInfo(info.parent);
-    art = parentInfo.ticket_art;
-  }
-  if (!art) art = (ticket.value?.doc as any)?.custom_ticket_art || "";
-  ticketArt.value = art || "";
-}
-
-watch(
-  () => ticket.value?.doc?.ticket_type,
-  (val) => {
-    syncFromTicketType(val || "");
-  },
-  { immediate: true }
-);
-
-function onTicketArtChange(val: string) {
-  if (val === ticketArt.value) return;
-  ticketArt.value = val || "";
-  const currentSub = ticket.value?.doc?.ticket_type;
-  if (!val) {
-    // Art cleared → clear top + ticket_type.
-    topLevelTicketType.value = "";
-    if (currentSub) handleFieldUpdate("ticket_type", "", true);
-    return;
-  }
-  // If existing ticket_type does not belong to the new art, clear top + ticket_type.
-  if (currentSub) {
-    resolveTypeInfo(currentSub).then((info) => {
-      const effectiveTop = info.parent || currentSub;
-      resolveTypeInfo(effectiveTop).then((topInfo) => {
-        if (topInfo.ticket_art && topInfo.ticket_art !== val) {
-          topLevelTicketType.value = "";
-          handleFieldUpdate("ticket_type", "", true);
-        }
-      });
-    });
-  } else {
-    topLevelTicketType.value = "";
-  }
-}
-
-function onTopLevelChange(val: string) {
-  if (val === topLevelTicketType.value) return;
-  topLevelTicketType.value = val || "";
-  const currentSub = ticket.value?.doc?.ticket_type;
-  if (!val) {
-    // Top cleared → clear ticket_type
-    if (currentSub) handleFieldUpdate("ticket_type", "", true);
-    return;
-  }
-  // Determine whether the new top has any sub-types. If not, set ticket_type=top.
-  // Either way, if the current sub-type does not belong to this top, replace it
-  // with the top itself (acts as default; user can pick a sub afterwards).
-  if (!currentSub) {
-    handleFieldUpdate("ticket_type", val, true);
-    typeInfoCache.value[val] = { parent: "", ticket_art: ticketArt.value };
-    return;
-  }
-  resolveParent(currentSub).then((parent) => {
-    const effectiveTop = parent || currentSub;
-    if (effectiveTop !== val) {
-      // Sub-type no longer matches → fall back to top as default value.
-      handleFieldUpdate("ticket_type", val, true);
-      typeInfoCache.value[val] = { parent: "", ticket_art: ticketArt.value };
-    }
-  });
-}
-
-function handleSubTypeChange(val: string) {
-  // Cache parent + art for new value
-  if (val) {
-    typeInfoCache.value[val] = {
-      parent: topLevelTicketType.value || "",
-      ticket_art: ticketArt.value || "",
-    };
-  }
-  handleFieldUpdate("ticket_type", val, true);
-}
-// --- end three-step ticket_type ---
-
 const fieldRefs = ref<Record<string, any>>({});
 
 const setFieldRef = (fieldname: string, el: any) => {
@@ -576,9 +381,15 @@ useShortcut({ key: "t", shift: true }, () => {
   @apply truncate;
 }
 
-:deep(.form-control-core div) {
+/*
+  Hinweis: Vorher hatten wir hier eine breite Wildcard-Regel
+  `:deep(.form-control-core div) { width:100%; display:flex }`.
+  Diese erzwang display:flex auf ALLEN inneren Divs der Link/FormControl
+  Komponente und sprengte vertikal gestapelte Layouts (z.B. den 3-stufigen
+  Ticket-Type Picker). Wir adressieren jetzt nur den direkten Wrapper.
+*/
+:deep(.form-control-core > div) {
   width: 100%;
-  display: flex;
 }
 
 :deep(.form-control-core-select select) {

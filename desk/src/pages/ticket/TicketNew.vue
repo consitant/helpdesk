@@ -24,16 +24,33 @@
         class="grid grid-cols-1 gap-4 sm:grid-cols-3"
         v-if="Boolean(visibleFields)"
       >
-        <UniInput
-          v-for="field in visibleFields"
-          :key="field.fieldname"
-          :field="field"
-          :value="templateFields[field.fieldname]"
-          @change="
-            (e) => handleOnFieldChange(e, field.fieldname, field.fieldtype)
-          "
-        >
-          <template v-if="field.fieldname === 'priority'" #label-extra>
+        <template v-for="field in visibleFields" :key="field.fieldname">
+          <!-- 3-stufiger Picker für ticket_type (Axovend) -->
+          <div
+            v-if="field.fieldname === 'ticket_type'"
+            class="flex flex-col gap-1"
+          >
+            <span class="block text-sm text-gray-700">
+              {{ __("Ticket-Art / Kategorie") }}
+              <span v-if="field.required" class="place-self-center text-red-500"> * </span>
+            </span>
+            <TicketTypeHierarchyPicker
+              :modelValue="templateFields['ticket_type'] || ''"
+              :ticketArtValue="templateFields['custom_ticket_art'] || ''"
+              :required="field.required"
+              @update:modelValue="(val:string) => handleOnFieldChange({ value: val }, 'ticket_type', 'Link')"
+              @update:ticketArt="(val:string) => handleOnFieldChange({ value: val }, 'custom_ticket_art', 'Select')"
+            />
+          </div>
+          <UniInput
+            v-else
+            :field="field"
+            :value="templateFields[field.fieldname]"
+            @change="
+              (e) => handleOnFieldChange(e, field.fieldname, field.fieldtype)
+            "
+          >
+            <template v-if="field.fieldname === 'priority'" #label-extra>
             <template
               v-if="
                 ticketPriorityResource.dataMap[templateFields[field.fieldname]]
@@ -51,7 +68,8 @@
               </Tooltip>
             </template>
           </template>
-        </UniInput>
+          </UniInput>
+        </template>
       </div>
       <!-- existing fields -->
       <div
@@ -134,6 +152,7 @@
 
 <script setup lang="ts">
 import { LayoutHeader, UniInput } from "@/components";
+import TicketTypeHierarchyPicker from "@/components/ticket-agent/TicketTypeHierarchyPicker.vue";
 import {
   handleLinkFieldUpdate,
   handleSelectFieldUpdate,
