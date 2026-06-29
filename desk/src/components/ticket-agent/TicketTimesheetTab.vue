@@ -68,7 +68,7 @@
       <FormControl
         v-model="form.description"
         type="textarea"
-        label="Kommentar — was wurde gemacht?"
+        label="Tätigkeit — was wurde gemacht?"
         :rows="2"
       />
       <div class="flex justify-end">
@@ -97,7 +97,6 @@
             <th class="py-2 pr-3 font-medium">Von–Bis</th>
             <th class="py-2 pr-3 font-medium text-right">Std.</th>
             <th class="py-2 pr-3 font-medium">Tätigkeit</th>
-            <th class="py-2 pr-3 font-medium">Abrechnung</th>
             <th class="py-2 font-medium">Status</th>
           </tr>
         </thead>
@@ -116,7 +115,6 @@
               {{ formatHours(row.hours) }}
             </td>
             <td class="py-2 pr-3 text-ink-gray-7">{{ row.description || "—" }}</td>
-            <td class="py-2 pr-3 text-ink-gray-7">{{ row.billing_category || "—" }}</td>
             <td class="py-2">
               <Badge
                 :theme="row.docstatus === 1 ? 'green' : 'gray'"

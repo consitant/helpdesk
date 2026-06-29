@@ -13,22 +13,8 @@
           "
         >
           <template v-for="field in section.fields">
-            <!-- Three-step UI for ticket_type (Axovend Hierarchie: Art → Kategorie → Unterkategorie) -->
-            <template v-if="field.fieldname === 'ticket_type' && field.visible">
-              <div
-                :key="'ticket_type_picker'"
-                :class="section.group ? 'flex-1 min-w-0' : 'w-full'"
-              >
-                <TicketTypeHierarchyPicker
-                  :modelValue="field.value as string"
-                  :ticketArtValue="(ticket.value?.doc as any)?.custom_ticket_art || ''"
-                  :required="field.required"
-                  @update:modelValue="(val:string) => handleFieldUpdate('ticket_type', val, true)"
-                />
-              </div>
-            </template>
             <Link
-              v-else-if="field.visible"
+              v-if="field.visible"
               :key="field.fieldname"
               :ref="(el) => setFieldRef(field.fieldname, el)"
               class="form-control-core"
@@ -155,7 +141,6 @@
 
 <script setup lang="ts">
 import { Link } from "@/components";
-import TicketTypeHierarchyPicker from "./TicketTypeHierarchyPicker.vue";
 import { parseField } from "@/composables/formCustomisation";
 import { useNotifyTicketUpdate } from "@/composables/realtime";
 import { useShortcut } from "@/composables/shortcuts";
@@ -381,18 +366,8 @@ useShortcut({ key: "t", shift: true }, () => {
   @apply truncate;
 }
 
-/*
-  Hinweis: Vorher hatten wir hier eine breite Wildcard-Regel
-  `:deep(.form-control-core div) { width:100%; display:flex }`.
-  Diese erzwang display:flex auf ALLEN inneren Divs der Link/FormControl
-  Komponente und sprengte vertikal gestapelte Layouts (z.B. den 3-stufigen
-  Ticket-Type Picker). Wir adressieren jetzt nur den direkten Wrapper.
-*/
-:deep(.form-control-core > div) {
+:deep(.form-control-core div) {
   width: 100%;
-}
-
-:deep(.form-control-core-select select) {
-  @apply text-base rounded h-7 py-1.5 border border-outline-gray-2 bg-surface-white placeholder-ink-gray-4 hover:border-outline-gray-3 hover:shadow-sm focus:bg-surface-white focus:border-outline-gray-4 focus:shadow-sm focus:ring-0 focus-visible:ring-0 text-ink-gray-8 transition-colors w-full dark:[color-scheme:dark];
+  display: flex;
 }
 </style>

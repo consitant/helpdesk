@@ -49,6 +49,13 @@
           />
         </template>
       </SidebarLink>
+      <SidebarLink
+        class="my-0.5"
+        :label="__('Meine Zeiten')"
+        :icon="Timer"
+        :to="{ name: 'MyTime' }"
+        :is-expanded="isExpanded"
+      />
     </div>
     <div
       :class="[
