@@ -8,6 +8,7 @@ export const useTicketStatusStore = defineStore("ticketStatus", () => {
     doctype: "HD Ticket Status",
     cache: ["HD Ticket Status", "list"],
     fields: [
+      "name",
       "label_agent",
       "label_customer",
       "order",
@@ -33,7 +34,9 @@ export const useTicketStatusStore = defineStore("ticketStatus", () => {
   function getStatus(label: string): HDTicketStatus | undefined {
     return statuses.data?.find(
       (s: HDTicketStatus) =>
-        s.label_agent === label || s.label_customer === label
+        s.name === label ||
+        s.label_agent === label ||
+        s.label_customer === label
     );
   }
   const colorMap = {
