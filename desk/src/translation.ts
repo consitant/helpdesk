@@ -26,7 +26,6 @@ function fetchTranslations() {
   createResource({
     url: "helpdesk.api.general.get_translations",
     method: "GET",
-    cache: "translations",
     auto: true,
     transform(data: Record<string, string>) {
       (window as any).translatedMessages = data;
