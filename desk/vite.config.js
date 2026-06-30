@@ -43,6 +43,9 @@ export default defineConfig(async ({ mode }) => {
       vue(),
       vueJsx(),
       VitePWA({
+        // selfDestroying: SW entfernt sich selbst + räumt alle Caches (verhindert,
+        // dass eine veraltete App-Version Deploys/Übersetzungen blockiert).
+        selfDestroying: true,
         registerType: "autoUpdate",
         devOptions: {
           enabled: true,
