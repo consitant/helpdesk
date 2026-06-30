@@ -646,7 +646,7 @@ class HDTicket(Document):
 
         reply_to_email = sender_email.email_id
         rendered_template: str | None = None
-        if self.via_customer_portal:
+        if True:  # axovend: Reply-Template IMMER verwenden (deutsch + CI, kein Portal-Zwang)
             email_content = frappe.db.get_single_value(
                 "HD Settings", "reply_via_agent_email_content"
             )
