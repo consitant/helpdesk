@@ -11,7 +11,7 @@
       <div class="flex items-center gap-3">
         <label v-if="!isPartner" class="flex items-center gap-2 text-xs text-ink-gray-7">
           <input type="checkbox" v-model="uploadPartnerVisible" />
-          Für Partner freigeben
+          Für Servicepartner freigeben
         </label>
         <input ref="fileInputRef" type="file" class="hidden" @change="onFileSelected" />
         <Button label="Datei auswählen" variant="solid" :loading="uploading" @click="fileInputRef?.click()" />
@@ -26,7 +26,7 @@
       <!-- Intern (nur interne Rollen) -->
       <section v-if="!isPartner">
         <div class="flex items-center gap-2 mb-2">
-          <span class="text-sm font-semibold text-ink-gray-8">🔒 Intern</span>
+          <span class="text-sm font-semibold text-ink-gray-8">🔒 intern</span>
           <span class="text-xs text-ink-gray-5">({{ internalFiles.length }}) — nur Innendienst/Leitung</span>
         </div>
         <div v-if="!internalFiles.length" class="text-sm text-ink-gray-5 py-3">Keine internen Anlagen.</div>
@@ -44,7 +44,7 @@
               <td class="py-2 pr-3 text-ink-gray-7 whitespace-nowrap">{{ formatDate(row.source_date || row.creation) }}</td>
               <td class="py-2 pr-3"><Badge :theme="row.source === 'ticket' ? 'blue' : 'gray'" :label="row.source === 'communication' ? 'aus Mail' : 'hochgeladen'" size="sm" /></td>
               <td class="py-2 text-right">
-                <Button variant="ghost" size="sm" label="→ Für Partner freigeben" @click="setVisible(row, true)" />
+                <Button variant="ghost" size="sm" label="→ Für Servicepartner freigeben" @click="setVisible(row, true)" />
               </td>
             </tr>
           </tbody>
@@ -54,10 +54,10 @@
       <!-- Partner-sichtbar -->
       <section>
         <div class="flex items-center gap-2 mb-2">
-          <span class="text-sm font-semibold text-ink-gray-8">👥 Partner-sichtbar</span>
+          <span class="text-sm font-semibold text-ink-gray-8">👥 Für Servicepartner sichtbar</span>
           <span class="text-xs text-ink-gray-5">({{ partnerFiles.length }})</span>
         </div>
-        <div v-if="!partnerFiles.length" class="text-sm text-ink-gray-5 py-3">Keine partner-sichtbaren Anlagen.</div>
+        <div v-if="!partnerFiles.length" class="text-sm text-ink-gray-5 py-3">Keine für Servicepartner sichtbaren Anlagen.</div>
         <table v-else class="w-full text-sm">
           <tbody>
             <tr v-for="row in partnerFiles" :key="row.name" class="border-b border-outline-gray-1 align-top">
@@ -72,7 +72,7 @@
               <td class="py-2 pr-3 text-ink-gray-7 whitespace-nowrap">{{ formatDate(row.source_date || row.creation) }}</td>
               <td class="py-2 pr-3"><Badge :theme="row.source === 'ticket' ? 'blue' : 'gray'" :label="row.source === 'communication' ? 'aus Mail' : 'hochgeladen'" size="sm" /></td>
               <td class="py-2 text-right">
-                <Button v-if="!isPartner" variant="ghost" size="sm" label="← Intern setzen" @click="setVisible(row, false)" />
+                <Button v-if="!isPartner" variant="ghost" size="sm" label="← auf intern setzen" @click="setVisible(row, false)" />
               </td>
             </tr>
           </tbody>
@@ -118,7 +118,7 @@ function setVisible(row: any, visible: boolean) {
     { file: row.name, visible: visible ? 1 : 0 },
     {
       onSuccess: () => {
-        toast.success(visible ? "Für Partner freigegeben." : "Auf intern gesetzt.");
+        toast.success(visible ? "Für Servicepartner freigegeben." : "Auf intern gesetzt.");
         attachments.reload();
       },
       onError: (e: any) => toast.error(e?.message || "Aktion fehlgeschlagen."),
