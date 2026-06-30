@@ -98,7 +98,7 @@ import {
   View,
 } from "@/types";
 import { HDTicketStatus } from "@/types/doctypes";
-import { getIcon } from "@/utils";
+import { getIcon, copyToClipboard } from "@/utils";
 import {
   Breadcrumbs,
   Button,
@@ -181,6 +181,15 @@ const breadcrumbs = computed(() => {
       });
     }
   }
+  items.push({
+    label: `#${ticket.value.doc?.name}`,
+    onClick: () => {
+      copyToClipboard(
+        `#${ticket.value.doc?.name}`,
+        __(`Ticketnummer #${ticket.value.doc?.name} kopiert`)
+      );
+    },
+  });
   items.push({
     label: ticket.value.doc?.subject,
     onClick: () => {
