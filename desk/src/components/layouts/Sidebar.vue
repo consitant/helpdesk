@@ -278,13 +278,37 @@ const allViews = computed(() => {
   }
 
   // axovend: persönliche „Meine offenen Tickets"-View ganz oben in der Seitenleiste
-  // (nur Agenten-Portal). Es ist eine öffentliche HD View mit %@me%-Filter, den
-  // helpdesk.api.doc.get_list_data pro eingeloggtem Agenten auflöst → jeder sieht
-  // seine eigenen offenen Tickets. Sie wird aus „Public Views" herausgezogen und
-  // als erster Eintrag oben eingehängt.
+  // (nur Agenten-Portal). Öffentliche HD View, aber der Empfänger-Filter wird hier
+  // client-seitig mit dem eingeloggten Agenten (authStore.userId) aufgelöst und via
+  // query.filters übergeben — deterministisch, unabhängig davon wie die SPA einen
+  // gespeicherten %@me%-Filter durchreicht. status_category != Resolved = alle
+  // Stadien außer „Abgeschlossen". query.view bleibt gesetzt → View-Identität,
+  // aktiver Zustand und Standard-Spalten (wie in der Tickets-Liste) bleiben erhalten.
   const MY_OPEN_LABEL = "Meine offenen Tickets";
-  const myOpenView = !isCustomerPortal.value
+  const myOpenRaw = !isCustomerPortal.value
     ? publicViews.value?.find((v) => v.label === MY_OPEN_LABEL)
+    : null;
+  const myOpenItem = myOpenRaw
+    ? {
+        label: myOpenRaw.label,
+        icon: myOpenRaw.icon,
+        to: {
+          name: myOpenRaw.route_name,
+          query: {
+            view: myOpenRaw.name,
+            filters: JSON.stringify({
+              _assign: ["LIKE", `%${authStore.userId}%`],
+              status_category: ["!=", "Resolved"],
+            }),
+          },
+        },
+        onClick: () => {
+          currentView.value = {
+            label: myOpenRaw.label,
+            icon: myOpenRaw.icon,
+          };
+        },
+      }
     : null;
 
   const options = [
@@ -292,7 +316,7 @@ const allViews = computed(() => {
       label: __("All Views"),
       hideLabel: true,
       opened: true,
-      views: myOpenView ? [...parseViews([myOpenView]), ...items] : items,
+      views: myOpenItem ? [myOpenItem, ...items] : items,
     },
   ];
   if (publicViews.value?.length && !isCustomerPortal.value) {
