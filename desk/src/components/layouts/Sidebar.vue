@@ -277,21 +277,36 @@ const allViews = computed(() => {
     items = items.filter((item) => item.label !== __("Call Logs"));
   }
 
+  // axovend: persönliche „Meine offenen Tickets"-View ganz oben in der Seitenleiste
+  // (nur Agenten-Portal). Es ist eine öffentliche HD View mit %@me%-Filter, den
+  // helpdesk.api.doc.get_list_data pro eingeloggtem Agenten auflöst → jeder sieht
+  // seine eigenen offenen Tickets. Sie wird aus „Public Views" herausgezogen und
+  // als erster Eintrag oben eingehängt.
+  const MY_OPEN_LABEL = "Meine offenen Tickets";
+  const myOpenView = !isCustomerPortal.value
+    ? publicViews.value?.find((v) => v.label === MY_OPEN_LABEL)
+    : null;
+
   const options = [
     {
       label: __("All Views"),
       hideLabel: true,
       opened: true,
-      views: items,
+      views: myOpenView ? [...parseViews([myOpenView]), ...items] : items,
     },
   ];
   if (publicViews.value?.length && !isCustomerPortal.value) {
-    options.push({
-      label: __("Public Views"),
-      opened: true,
-      hideLabel: false,
-      views: parseViews(publicViews.value),
-    });
+    const publicRest = publicViews.value.filter(
+      (v) => v.label !== MY_OPEN_LABEL
+    );
+    if (publicRest.length) {
+      options.push({
+        label: __("Public Views"),
+        opened: true,
+        hideLabel: false,
+        views: parseViews(publicRest),
+      });
+    }
   }
   if (pinnedViews.value?.length) {
     options.push({
