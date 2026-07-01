@@ -153,9 +153,9 @@ const statusDropdown = computed(() => {
     value: o.label_agent,
     onClick: () => {
       notifyTicketUpdate("Status", o.label_agent);
-      if (ticket.value.doc.status === o.label_agent) return;
+      if (ticket.value.doc.status === o.name) return;
       ticket.value.setValue.submit(
-        { status: o.label_agent },
+        { status: o.name },
         {
           onSuccess() {
             activities.value.reload();

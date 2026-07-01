@@ -342,7 +342,7 @@ const dropdownOptions = computed(() =>
   ticketStatusStore.statuses.data?.map((o: HDTicketStatus) => ({
     label: o.label_agent,
     value: o.label_agent,
-    onClick: () => updateTicket("status", o.label_agent),
+    onClick: () => updateTicket("status", o.name),
     icon: () =>
       h(IndicatorIcon, {
         class: o.parsed_color,
