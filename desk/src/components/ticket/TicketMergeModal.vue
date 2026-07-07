@@ -28,12 +28,6 @@
                   >
                   <ul class="list-disc pl-4 mt-1 space-y-1">
                     <li>
-                      {{ __("Ticket must be Open or Paused.") }}
-                      <code class="bg-gray-100 rounded-md px-1 py-0.5">
-                        {{ __("status_category in ['Open', 'Paused']") }}</code
-                      >
-                    </li>
-                    <li>
                       {{ __("Ticket must not already be merged.") }}
                       <code class="bg-gray-100 rounded-md px-1 py-0.5">
                         {{ __("is_merged === 0") }}</code
@@ -128,7 +122,6 @@ const emit = defineEmits<E>();
 const showDialog = defineModel<boolean>();
 
 interface Filter {
-  status_category: [string, string[] | string];
   is_merged: number;
   name: string[];
   customer?: any;
@@ -137,7 +130,6 @@ interface Filter {
 
 function getDefaultFilters() {
   const filters: Filter = {
-    status_category: ["in", ["Open", "Paused"]],
     is_merged: 0,
     name: ["!=", props.ticket.name],
   };

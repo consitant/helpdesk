@@ -78,9 +78,6 @@ function update(val = null) {
 const showMergeModal = ref(false);
 
 const showMergeOption = computed(() => {
-  return (
-    !props.ticket.is_merged &&
-    ["Open", "Paused"].includes(props.ticket.status_category)
-  );
+  return !props.ticket.is_merged;
 });
 </script>

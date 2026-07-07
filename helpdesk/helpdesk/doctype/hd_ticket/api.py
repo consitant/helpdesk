@@ -362,6 +362,16 @@ def merge_ticket(source: int, target: int):
     )
     duplicate_list_retain_timestamp("File", source_attachments, target, controller)
 
+    # axovend: Timesheet-Buchungen (custom_hd_ticket) ans Ziel umhängen
+    if frappe.db.has_column("Timesheet Detail", "custom_hd_ticket"):
+        frappe.db.set_value(
+            "Timesheet Detail",
+            {"custom_hd_ticket": source},
+            "custom_hd_ticket",
+            target,
+            update_modified=False,
+        )
+
     doc = frappe.get_doc("HD Ticket", source)
 
     doc.status = "Closed"

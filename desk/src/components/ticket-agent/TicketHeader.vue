@@ -243,7 +243,6 @@ const ticketCount = createResource({
   makeParams: () => ({
     doctype: "HD Ticket",
     filters: {
-      status_category: ["!=", "Resolved"],
       is_merged: 0,
     },
   }),
@@ -251,11 +250,7 @@ const ticketCount = createResource({
 });
 const showMergeModal = ref(false);
 const showMergeOption = computed(() => {
-  return (
-    !ticket?.value?.doc?.is_merged &&
-    ["Open", "Paused"].includes(ticket?.value?.doc?.status_category) &&
-    ticketCount.data > 1
-  );
+  return !ticket?.value?.doc?.is_merged && ticketCount.data > 1;
 });
 const defaultActions = computed(() => {
   let items = [];
