@@ -59,8 +59,29 @@
         v-for="column in columns"
         :key="column.key"
         :item="column"
+        :class="
+          isSortableColumn(column)
+            ? 'cursor-pointer select-none hover:text-ink-gray-8'
+            : ''
+        "
+        @click="handleSortClick(column)"
         @columnWidthUpdated="(width) => console.log(width)"
-      />
+      >
+        <template #suffix v-if="isSortableColumn(column)">
+          <AscendingIcon
+            v-if="activeSort?.field === column.key && activeSort.direction === 'asc'"
+            class="h-3.5 w-3.5 text-ink-gray-7"
+          />
+          <DescendingIcon
+            v-else-if="activeSort?.field === column.key && activeSort.direction === 'desc'"
+            class="h-3.5 w-3.5 text-ink-gray-7"
+          />
+          <SortIcon
+            v-else
+            class="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-30"
+          />
+        </template>
+      </ListHeaderItem>
     </ListHeader>
     <ListRows
       :rows="rows"
@@ -131,6 +152,11 @@ import {
   Reload,
   SortBy,
 } from "@/components/view-controls";
+import {
+  AscendingIcon,
+  DescendingIcon,
+  SortIcon,
+} from "@/components/icons";
 import { useScreenSize } from "@/composables/screen";
 import {
   currentView as headerView,
@@ -442,6 +468,32 @@ const sortableFields = createResource({
     show_customer_portal_fields: defaultParams.show_customer_portal_fields,
   },
 });
+
+// — Click-to-Sort on column headers —
+// Ersetzt/ergänzt den SortBy-Button: Klick auf den Spaltenkopf sortiert
+// serverseitig über applySort(), mit Toggle asc/desc und sichtbarem Indikator.
+const activeSort = computed(() => {
+  const ob = defaultParams.order_by;
+  if (!ob) return null;
+  const first = ob.split(", ")[0];
+  const [field, direction] = first.split(" ");
+  return { field, direction: direction || "asc" };
+});
+
+function isSortableColumn(column) {
+  if (!sortableFields.data) return false;
+  return sortableFields.data.some((sf) => sf.value === column.key);
+}
+
+function handleSortClick(column) {
+  if (!isSortableColumn(column)) return;
+  let newDirection = "asc";
+  if (activeSort.value?.field === column.key) {
+    // Gleiche Spalte → Richtung toggeln
+    newDirection = activeSort.value.direction === "asc" ? "desc" : "asc";
+  }
+  applySort(`${column.key} ${newDirection}`);
+}
 
 const quickFilters = createResource({
   url: "helpdesk.api.doc.get_quick_filters",
