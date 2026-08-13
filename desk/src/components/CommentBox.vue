@@ -17,7 +17,7 @@
       <div class="flex items-center gap-1">
         <Tooltip :text="dateFormat(creation, dateTooltipFormat)">
           <span class="pl-0.5 text-sm text-gray-600">
-            {{ timeAgo(creation) }}
+            {{ timeAgoWithDate(creation) }}
           </span>
         </Tooltip>
         <div v-if="authStore.userId === commentedBy && !editable">
@@ -164,7 +164,7 @@ import {
   getFontFamily,
   isContentEmpty,
   textEditorMenuButtons,
-  timeAgo,
+  timeAgoWithDate,
 } from "@/utils";
 import {
   Avatar,

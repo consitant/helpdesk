@@ -14,7 +14,7 @@
           <p>{{ sender.full_name || "Guest" }}</p>
           <Tooltip :text="dateFormat(creation, dateTooltipFormat)">
             <p class="text-xs md:text-sm text-ink-gray-5">
-              {{ timeAgo(creation) }}
+              {{ timeAgoWithDate(creation) }}
             </p>
           </Tooltip>
           <p class="sm:flex hidden text-sm text-ink-gray-5" v-if="sender.name">
@@ -46,7 +46,7 @@
             v-if="!isMobileView"
           >
             <p class="text-xs md:text-sm text-ink-gray-5">
-              {{ timeAgo(creation) }}
+              {{ timeAgoWithDate(creation) }}
             </p>
           </Tooltip>
         </div>
@@ -117,7 +117,7 @@ import { AttachmentItem } from "@/components";
 import { useScreenSize } from "@/composables/screen";
 import { useAuthStore } from "@/stores/auth";
 import { TicketSymbol } from "@/types";
-import { dateFormat, dateTooltipFormat, timeAgo } from "@/utils";
+import { dateFormat, dateTooltipFormat, timeAgoWithDate } from "@/utils";
 import { Dropdown } from "frappe-ui";
 import { storeToRefs } from "pinia";
 import { computed, inject, ref } from "vue";

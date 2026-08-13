@@ -31,7 +31,7 @@
 
       <div class="text-gray-600 text-sm w-2/6 flex justify-end">
         <Tooltip :text="dateFormat(creation, dateTooltipFormat)">
-          <span>{{ timeAgo(creation) }}</span>
+          <span>{{ timeAgoWithDate(creation) }}</span>
         </Tooltip>
       </div>
     </div>
@@ -51,7 +51,7 @@
           :text="dateFormat(relatedActivity.creation, dateTooltipFormat)"
         >
           <div class="text-gray-600 text-sm w-2/6 flex justify-end">
-            {{ timeAgo(relatedActivity.creation) }}
+            {{ timeAgoWithDate(relatedActivity.creation) }}
           </div>
         </Tooltip>
       </div>
@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import { SelectIcon } from "@/components/icons";
-import { dateFormat, dateTooltipFormat, timeAgo } from "@/utils";
+import { dateFormat, dateTooltipFormat, timeAgoWithDate } from "@/utils";
 import { ref } from "vue";
 const props = defineProps({
   activity: {

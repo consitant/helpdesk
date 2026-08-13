@@ -8,7 +8,7 @@
         <LucideDot class="text-gray-500 size-4" />
         <Tooltip :text="dateFormat(date, dateTooltipFormat)">
           <span class="text-gray-600">
-            {{ timeAgo(date) }}
+            {{ timeAgoWithDate(date) }}
           </span>
         </Tooltip>
       </div>
@@ -30,7 +30,7 @@
 import { AttachmentItem, UserAvatar } from "@/components";
 import { dayjs } from "@/dayjs";
 import { UserInfo } from "@/types";
-import { dateFormat, dateTooltipFormat, timeAgo } from "@/utils";
+import { dateFormat, dateTooltipFormat, timeAgoWithDate } from "@/utils";
 import { Tooltip } from "frappe-ui";
 import sanitizeHtml from "sanitize-html";
 

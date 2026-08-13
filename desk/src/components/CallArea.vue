@@ -19,7 +19,7 @@
       <div class="ml-auto whitespace-nowrap">
         <Tooltip :text="dateFormat(activity.creation, 'MMM D, dddd')">
           <div class="text-sm text-ink-gray-5">
-            {{ __(timeAgo(activity.creation)) }}
+            {{ timeAgoWithDate(activity.creation) }}
           </div>
         </Tooltip>
       </div>
@@ -96,7 +96,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { dateFormat, timeAgo } from "@/utils";
+import { dateFormat, timeAgoWithDate } from "@/utils";
 import { Avatar, Badge, Tooltip } from "frappe-ui";
 import { inject, ref } from "vue";
 import MultipleAvatar from "./MultipleAvatar.vue";

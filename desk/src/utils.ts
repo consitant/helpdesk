@@ -64,6 +64,37 @@ export function timeAgo(date) {
   return prettyDate(date);
 }
 
+/** Datumsformat fuer die sichtbare Zusatzangabe: 13.08.2026 14:16 */
+export const axvDateFormat = "DD.MM.YYYY HH:mm";
+
+/**
+ * Relative Angabe plus das echte Datum dahinter:
+ * `vor 4 Wochen (13.08.2026 14:16)`
+ *
+ * Die relative Angabe allein beantwortet nicht, WANN etwas passiert ist —
+ * das exakte Datum stand bisher nur im Tooltip und war damit weder
+ * ueberfliegbar noch kopierbar.
+ */
+export function timeAgoWithDate(date) {
+  if (!date) return "";
+  const relativ = prettyDate(date);
+  const absolut = dateFormat(date, axvDateFormat);
+  if (!relativ) return absolut;
+  if (!absolut) return relativ;
+  return `${relativ} (${absolut})`;
+}
+
+/**
+ * Dasselbe in der Kurzform der Listenspalten: `4 w (13.08.2026 14:16)`
+ */
+export function formatTimeShortWithDate(date) {
+  if (!date) return "";
+  const absolut = dateFormat(date, axvDateFormat);
+  const kurz = formatTimeShort(date);
+  if (!absolut) return kurz;
+  return `${kurz} (${absolut})`;
+}
+
 export function getBrowserTimezone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }

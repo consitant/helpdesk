@@ -167,7 +167,12 @@ import { useAuthStore } from "@/stores/auth";
 import { globalStore } from "@/stores/globalStore";
 import { capture } from "@/telemetry";
 import { View, ViewType } from "@/types";
-import { formatTimeShort, getIcon } from "@/utils";
+import {
+  dateFormat,
+  dateTooltipFormat,
+  formatTimeShortWithDate,
+  getIcon,
+} from "@/utils";
 import { useStorage } from "@vueuse/core";
 import { useTicketStatusStore } from "@/stores/ticketStatus";
 import { __ } from "@/translation";
@@ -521,9 +526,12 @@ function listCell(column: any, row: any, item: any, idx: number) {
     });
   }
   if (column.type === "Datetime") {
+    // Relative Angabe plus echtes Datum: "4 w (13.08.2026 14:16)".
+    // truncate + title, weil die Spalte je nach Konfiguration schmal ist.
     return h("span", {
-      class: "text-p-xs",
-      textContent: formatTimeShort(item),
+      class: "text-p-xs truncate",
+      textContent: formatTimeShortWithDate(item),
+      title: dateFormat(item, dateTooltipFormat),
     });
   }
   if (column.type === "MultipleAvatar") {
