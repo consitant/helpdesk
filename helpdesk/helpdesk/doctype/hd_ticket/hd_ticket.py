@@ -29,6 +29,7 @@ from helpdesk.helpdesk.doctype.hd_ticket_activity.hd_ticket_activity import (
 from helpdesk.helpdesk.utils.email import (
     default_outgoing_email_account,
     default_ticket_outgoing_email_account,
+    is_ticket_mailbox,
 )
 from helpdesk.search import HelpdeskSearch
 from helpdesk.utils import (
@@ -516,6 +517,12 @@ class HDTicket(Document):
         if not email_account.enable_outgoing:
             return
 
+        # axovend: Ein Fremdkonto in der letzten Kommunikation darf sich nicht
+        # fortpflanzen -- sonst antwortet jede Folgemail eines betroffenen
+        # Tickets weiterhin aus dem falschen Postfach.
+        if not is_ticket_mailbox(email_account.name):
+            return
+
         return email_account
 
     def sender_email(self):
@@ -574,6 +581,16 @@ class HDTicket(Document):
         subject = f"Re: {self.subject} (#{self.name})"
         from_email_id = from_email.get("email_id") if from_email else None
         email_account_name = from_email.get("email_account") if from_email else None
+
+        # axovend: Der Absenderwaehler der SPA speist sich aus `User Email` und
+        # bietet deshalb auch Konten an, die nichts mit dem Ticketsystem zu tun
+        # haben (z. B. einkauf@). Bei genau einem Eintrag waehlt er ihn sogar
+        # unsichtbar vor. Solche Konten hier verwerfen und auf die Ticket-
+        # Mailbox zurueckfallen, statt aus dem falschen Postfach zu antworten.
+        if email_account_name and not is_ticket_mailbox(email_account_name):
+            from_email_id = None
+            email_account_name = None
+
         sender = from_email_id or frappe.session.user
         recipients = to or self.raised_by
 
