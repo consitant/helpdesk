@@ -9,21 +9,24 @@
     <div :class="isExpanded ? 'mx-0 p-2' : 'm-2'">
       <UserMenu :options="profileSettings" />
     </div>
+    <!--
+      Fuehrt direkt auf die Volltextsuche statt die Befehlspalette zu oeffnen.
+      Vorher war die Suchseite nur ueber drei Schritte erreichbar (Palette
+      oeffnen, tippen, Eintrag "Search for ..." anklicken) und damit praktisch
+      unauffindbar. Die Palette bleibt unveraendert auf Strg/Cmd+K
+      (CP.vue registriert das Kuerzel global) und steht so auch in der
+      Kuerzel-Uebersicht; das Abzeichen "K" ist hier raus, weil der Klick nun
+      etwas anderes tut als das Kuerzel.
+    -->
     <SidebarLink
       v-if="!isCustomerPortal"
       :label="__('Search')"
       :icon="LucideSearch"
-      :on-click="() => openCommandPalette()"
+      :to="{ name: 'SearchAgent' }"
+      :is-active="isActiveTab('SearchAgent')"
       :is-expanded="isExpanded"
       class="mt-1.5"
-    >
-      <template #right>
-        <span class="flex items-center gap-0.5 font-medium text-gray-600">
-          <component :is="device.modifierIcon" class="h-3 w-3" />
-          <span>K</span>
-        </span>
-      </template>
-    </SidebarLink>
+    />
     <div v-if="!isCustomerPortal">
       <div
         v-if="notificationStore.unread"
@@ -180,7 +183,6 @@ import { FrappeCloudIcon, InviteCustomer } from "@/components/icons";
 import ShortcutsModal from "@/components/modals/ShortcutsModal.vue";
 import SettingsModal from "@/components/Settings/SettingsModal.vue";
 import UserMenu from "@/components/UserMenu.vue";
-import { useDevice } from "@/composables";
 import { confirmLoginToFrappeCloud } from "@/composables/fc";
 import { useScreenSize } from "@/composables/screen";
 import { currentView, useView } from "@/composables/useView";
@@ -244,7 +246,6 @@ const router = useRouter();
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
 const { isExpanded, width } = storeToRefs(useSidebarStore());
-const device = useDevice();
 const telephonyStore = useTelephonyStore();
 const { isCallingEnabled } = storeToRefs(telephonyStore);
 
@@ -432,10 +433,6 @@ function isActiveTab(to: any) {
     return route.query.view == to?.query?.view;
   }
   return route.name === to;
-}
-
-function openCommandPalette() {
-  showCommandPalette.value = true;
 }
 
 const logo = h(

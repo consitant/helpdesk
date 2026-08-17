@@ -53,6 +53,11 @@ class HelpdeskSearch(SQLiteSearch):
         "Communication": {
             "fields": [
                 "name",
+                # Ohne Titel-Zuordnung zeigt ein E-Mail-Treffer in der
+                # Ergebnisliste die interne Kennung (z. B. "u25te91h32") statt
+                # des Betreffs — SearchAgent.vue faellt auf `item.name` zurueck,
+                # wenn `title` leer ist.
+                {"title": "subject"},
                 "content",
                 "modified",
                 "reference_doctype",
@@ -89,12 +94,24 @@ class HelpdeskSearch(SQLiteSearch):
         if doc.doctype == "Communication":
             # For communications, ensure reference fields are set for ticket doctype
             document["reference_doctype"] = doc.reference_doctype
-            if (
-                doc.reference_doctype == "HD Ticket"
-                and doc.reference_name
-                and type(doc.reference_name) is str
-            ):
+            if doc.reference_doctype == "HD Ticket" and doc.reference_name:
                 document["reference_name"] = int(doc.reference_name)
+                # `reference_ticket` ist Pflicht, nicht Kosmetik: der
+                # Berechtigungsfilter der Suche (get_search_filters) schraenkt
+                # ausschliesslich darauf ein, und SQLiteSearch verknuepft die
+                # Filter mit UND. Blieb das Feld leer, fiel JEDE E-Mail aus dem
+                # Ergebnis heraus, obwohl sie im Index lag (gemessen 17.08.2026:
+                # 3814 von 3814 Communication-Zeilen ohne Wert, 0 Treffer ueber
+                # 8 Suchbegriffe inkl. Woertern, die nur im Mailtext stehen).
+                #
+                # Nachrichten, die NICHT an einem Ticket haengen, bleiben bewusst
+                # ohne den Wert und damit unsichtbar. Das ist der Schutz gegen
+                # ein reales Leck: `update_doc_index` (frappe) prueft beim
+                # laufenden Aktualisieren nur den Dokumenttyp und ignoriert das
+                # `filters`-Kriterium der Konfiguration, weshalb auch
+                # ToDo-Benachrichtigungen sowie Angebotsanfragen-, Bestell- und
+                # Auftragskorrespondenz im Helpdesk-Index landen.
+                document["reference_ticket"] = int(doc.reference_name)
 
         if doc.doctype == "HD Ticket":
             document["reference_ticket"] = int(doc.name)
