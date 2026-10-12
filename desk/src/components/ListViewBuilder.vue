@@ -791,6 +791,18 @@ function findCurrentView() {
   return currentView;
 }
 
+// axovend (TG §85): Dashboard-Links tragen nur filters/quelle, keinen view. Ändern sich
+// diese ohne view (z. B. Klick auf „Tickets“ in der Seitenleiste danach), Liste neu
+// aufbauen — sonst blieben die Dashboard-Filter stehen.
+watch(
+  () => [route.query.filters, route.query.quelle],
+  (neu, alt) => {
+    if (route.query.view) return;
+    if (neu[0] === alt[0] && neu[1] === alt[1]) return;
+    handleViewChanges();
+  }
+);
+
 watch(
   () => route.query.view,
   (val: string) => {
