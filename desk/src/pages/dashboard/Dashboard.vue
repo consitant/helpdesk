@@ -41,14 +41,14 @@
           type="select"
           class="w-40"
           v-model="team"
-          :options="[{ label: 'Alle Teams', value: '' }, ...(data?.teams || []).map((t) => ({ label: t, value: t }))]"
+          :options="[{ label: 'Alle Teams', value: ALLE }, ...(data?.teams || []).map((t) => ({ label: t, value: t }))]"
         />
         <FormControl
           v-if="data?.ist_leitung"
           type="select"
           class="w-48"
           v-model="agent"
-          :options="[{ label: 'Alle Agenten', value: '' }, ...(data?.agenten || [])]"
+          :options="[{ label: 'Alle Agenten', value: ALLE }, ...(data?.agenten || [])]"
         />
         <Button v-if="resource.loading" :loading="true" variant="ghost" />
       </div>
@@ -194,8 +194,9 @@ const preset = ref("monat");
 const anker = ref(dayjs());
 const fromDate = ref("");
 const toDate = ref("");
-const team = ref("");
-const agent = ref("");
+const ALLE = "__alle__";
+const team = ref(ALLE);
+const agent = ref(ALLE);
 
 function rangeFor(p: string, a: any): [any, any] {
   if (p === "woche") {
@@ -244,8 +245,8 @@ const resource = createResource({
   makeParams: () => ({
     from_date: fromDate.value,
     to_date: toDate.value,
-    team: team.value || null,
-    agent: agent.value || null,
+    team: team.value === ALLE ? null : team.value,
+    agent: agent.value === ALLE ? null : agent.value,
   }),
   auto: true,
 });
@@ -255,14 +256,14 @@ watch([fromDate, toDate, team, agent], () => {
   if (fromDate.value && toDate.value) resource.reload();
 });
 watch(team, () => {
-  agent.value = "";
+  agent.value = ALLE;
 });
 
 // Tabelle
 const spalten = [
   { key: "agent_name", label: "Agent" },
   { key: "offen", label: "Offen", hilfe: "Aktuell zugewiesene, nicht gelöste Tickets (inkl. wartend)" },
-  { key: "ueberfaellig", label: "Überfällig", hilfe: "Offen (nicht wartend) und SLA-Frist (Reaktion bzw. Lösung) überschritten" },
+  { key: "ueberfaellig", label: "Überfällig", hilfe: "Offen (nicht wartend) und SLA-Lösungsfrist überschritten" },
   { key: "sla_verletzt_offen", label: "SLA verletzt", hilfe: "Offene Tickets mit SLA-Status „Failed“" },
   { key: "neu_zugewiesen", label: "Neu zugewiesen", hilfe: "Im Zeitraum zugewiesene Tickets (auch wenn später weitergegeben)" },
   { key: "geloest", label: "Gelöst", hilfe: "Im Zeitraum gelöste/abgeschlossene Tickets" },
@@ -343,7 +344,7 @@ function neuFilter() {
   return { ...teamF(), creation: ["between", [data.value.zeitraum.von, data.value.zeitraum.bis]] };
 }
 function openTickets(filters: Record<string, any>) {
-  router.push({ name: "TicketsAgent", query: { filters: JSON.stringify(filters) } });
+  router.push({ name: "TicketsAgent", query: { filters: JSON.stringify(filters), quelle: "dashboard" } });
 }
 
 // Kacheln
@@ -383,7 +384,7 @@ const kacheln = computed(() => {
       titel: "Überfällig (offen)",
       wert: k.ueberfaellig,
       sub: "SLA-Frist überschritten",
-      hilfe: "Offene, nicht wartende Tickets mit überschrittener Reaktions- oder Lösungsfrist",
+      hilfe: "Offene, nicht wartende Tickets mit überschrittener SLA-Lösungsfrist",
       link: ueberfaelligFilter(a),
     },
   ];

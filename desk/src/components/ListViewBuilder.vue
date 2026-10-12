@@ -613,13 +613,16 @@ provide("listViewActions", {
   reload,
 });
 
+// axovend (TG §85): true solange Dashboard-Filter aus der URL aktiv sind
+let nurUrlFilter = false;
+
 function applyFilters(filters) {
   isViewUpdated.value = true;
   defaultParams.filters = { ...filters };
   list.submit({ ...defaultParams });
 
   // automatically update filters for default view
-  if (!defaultParams.is_default) return;
+  if (!defaultParams.is_default || nurUrlFilter) return;
   handleViewUpdate();
   isViewUpdated.value = false;
 }
@@ -628,7 +631,7 @@ function applySort(order_by: string) {
   isViewUpdated.value = true;
   defaultParams.order_by = order_by;
   list.submit({ ...defaultParams, order_by });
-  if (!defaultParams.is_default) return;
+  if (!defaultParams.is_default || nurUrlFilter) return;
   handleViewUpdate();
   isViewUpdated.value = false;
 }
@@ -740,6 +743,7 @@ function handleReload() {
 }
 
 function handleViewChanges() {
+  nurUrlFilter = false;
   let currentView: View = findCurrentView();
   if (!currentView) {
     router.push({ name: route.name });
@@ -754,7 +758,14 @@ function handleViewChanges() {
   if (route.query.filters) {
     try {
       const parsedFilters = JSON.parse(route.query.filters as string);
-      if (Object.keys(parsedFilters).length > 0) {
+      // axovend (TG §85): Links aus dem Dashboard (?quelle=dashboard) ersetzen die
+      // Filter der Ansicht, statt sie zu mergen — persönliche Default-Ansichten tragen
+      // oft alte Schnellfilter (z. B. name LIKE %1861%). Kein Auto-Speichern in die
+      // Default-Ansicht, solange diese Filter aktiv sind (siehe applyFilters/applySort).
+      nurUrlFilter = route.query.quelle === "dashboard";
+      if (nurUrlFilter) {
+        defaultParams.filters = { ...parsedFilters };
+      } else if (Object.keys(parsedFilters).length > 0) {
         defaultParams.filters = {
           ...defaultParams.filters,
           ...parsedFilters,
