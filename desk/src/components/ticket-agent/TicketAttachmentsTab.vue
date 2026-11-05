@@ -78,6 +78,12 @@
           </tbody>
         </table>
       </section>
+
+      <div v-if="embeddedCount" class="text-xs text-ink-gray-5">
+        <button class="underline hover:text-ink-gray-7" @click="showEmbedded = !showEmbedded">
+          {{ showEmbedded ? `${embeddedCount} eingebettete Bilder (Signaturen) ausblenden` : `${embeddedCount} eingebettete Bilder (Signaturen) anzeigen` }}
+        </button>
+      </div>
     </template>
   </div>
 </template>
@@ -109,8 +115,16 @@ watch(
   }
 );
 
-const internalFiles = computed(() => (attachments.data || []).filter((r: any) => !r.partner_visible));
-const partnerFiles = computed(() => (attachments.data || []).filter((r: any) => r.partner_visible));
+// axovend: eingebettete Bilder (Signaturen/Logos im Mailtext) standardmäßig ausblenden
+const showEmbedded = ref(false);
+const embeddedCount = computed(
+  () => (attachments.data || []).filter((r: any) => r.eingebettet === true).length
+);
+const visibleRows = computed(() =>
+  (attachments.data || []).filter((r: any) => showEmbedded.value || r.eingebettet !== true)
+);
+const internalFiles = computed(() => visibleRows.value.filter((r: any) => !r.partner_visible));
+const partnerFiles = computed(() => visibleRows.value.filter((r: any) => r.partner_visible));
 
 const visResource = createResource({ url: "axovend.api.set_attachment_partner_visible" });
 function setVisible(row: any, visible: boolean) {
