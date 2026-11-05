@@ -330,15 +330,15 @@ function toggleAgent(agent: AgentOption) {
       pinnedSelectedNames.value.delete(agent.value);
     }
   } else {
-    localAssignees.value.push({
-      name: agent.value,
-      image: agent.image || "",
-      label: agent.label,
-    });
-    // Pin only when selecting during search so they stay visible when search clears
-    if (isSearching) {
-      pinnedSelectedNames.value.add(agent.value);
-    }
+    // axovend: nur ein Beauftragter pro Ticket – Auswahl ersetzt die bisherige
+    localAssignees.value = [
+      {
+        name: agent.value,
+        image: agent.image || "",
+        label: agent.label,
+      },
+    ];
+    pinnedSelectedNames.value = new Set([agent.value]);
   }
 }
 
@@ -400,25 +400,34 @@ async function assignSelf() {
 
   if (localAssignees.value.some((a) => a.name === currentAgentName)) return;
 
+  // axovend: Selbstzuweisung ersetzt den bisherigen Beauftragten
+  const previous = localAssignees.value.map((a) => a.name);
   const self = currentUser.value;
-  localAssignees.value.push({
-    name: currentAgentName,
-    image: self.user_image || "",
-    label: self.full_name,
-  });
+  localAssignees.value = [
+    {
+      name: currentAgentName,
+      image: self.user_image || "",
+      label: self.full_name,
+    },
+  ];
 
   try {
+    if (previous.length) {
+      const removeResult = await removeAssigneesResource.submit(previous);
+      if (removeResult?.exc) throw new Error(removeResult.exc);
+    }
     await addAssigneesResource.submit([currentAgentName]);
-    await logActivity(`assigned ${currentAgentName}`);
+    await logActivity(
+      `assigned ${currentAgentName}` +
+        (previous.length ? ` & unassigned ${previous.join(", ")}` : "")
+    );
     capture("ticket_assigned", { doctype: "HD Ticket" });
     toast.success(__("Assignee's updated successfully."));
     assignees.value.reload();
     activities.value.reload();
   } catch {
     toast.error(__("Failed to update Assignee's."));
-    localAssignees.value = localAssignees.value.filter(
-      (a) => a.name !== currentAgentName
-    );
+    assignees.value.reload();
   }
 }
 

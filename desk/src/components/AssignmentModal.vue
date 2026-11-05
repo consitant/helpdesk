@@ -118,8 +118,22 @@ const { teamRestrictionApplied, assignWithinTeam } = useConfigStore();
 
 const error = ref("");
 
-const addAssignee = (value) => {
+const addAssignee = async (value) => {
   error.value = "";
+  // axovend: nur ein Beauftragter pro Ticket – bisherige Zuweisungen zuerst entfernen
+  for (const current of props.assignees as { name: string }[]) {
+    if (current.name === value) continue;
+    try {
+      await call("frappe.desk.form.assign_to.remove", {
+        doctype: props.doctype,
+        name: props.docname,
+        assign_to: current.name,
+      });
+    } catch (e) {
+      error.value = "Bisherige Zuweisung konnte nicht entfernt werden.";
+      return;
+    }
+  }
   createResource({
     url: "frappe.desk.form.assign_to.add",
     auto: true,
