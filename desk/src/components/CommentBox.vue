@@ -1,5 +1,8 @@
 <template>
-  <div class="flex-col text-base flex-1" ref="commentBoxRef">
+  <div
+    class="flex-col text-base flex-1 rounded-lg border border-outline-gray-2 bg-surface-gray-2 px-3 py-2"
+    ref="commentBoxRef"
+  >
     <div class="mb-1 ml-0.5 flex items-center justify-between">
       <div class="text-gray-600 flex items-center gap-2">
         <Avatar
@@ -12,6 +15,11 @@
             {{ commenter }}
           </span>
           <span> {{ __(" commented") }}</span>
+          <span
+            class="ml-2 rounded bg-surface-gray-4 px-1.5 py-0.5 text-xs text-ink-gray-7"
+          >
+            {{ __("Internal") }}
+          </span>
         </p>
       </div>
       <div class="flex items-center gap-1">
