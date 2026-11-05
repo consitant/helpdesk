@@ -186,6 +186,10 @@ class HDTicket(Document):
             not self.via_customer_portal
             and not frappe.flags.initial_sync
             and send_ack_email
+            # axovend: keine Eingangsbestätigung an interne Absender (TG §93)
+            and not (
+                (parseaddr(self.raised_by or "")[1] or "").lower().endswith("@axovend.com")
+            )
         ):
             self.send_acknowledgement_email()
 
