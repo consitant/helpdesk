@@ -127,8 +127,6 @@
                   <td class="py-2 px-3 text-right" :class="slaFarbe(z.sla_pct)">{{ pct(z.sla_pct, z.sla_n) }}</td>
                   <td class="py-2 px-3 text-right text-ink-gray-7">{{ z.antworten }}</td>
                   <td class="py-2 px-3 text-right text-ink-gray-7">{{ z.kommentare }}</td>
-                  <td class="py-2 px-3 text-right text-ink-gray-7">{{ std(z.stunden) }}</td>
-                  <td class="py-2 px-3 text-right text-ink-gray-7">{{ std(z.stunden_abrechenbar) }}</td>
                 </tr>
                 <tr v-if="!sortierteZeilen.length">
                   <td :colspan="spalten.length" class="py-6 text-center text-ink-gray-5">Keine Agenten im Filter.</td>
@@ -149,8 +147,6 @@
                   <td class="py-2 px-3 text-right">{{ pct(data.team_summe.sla_pct, data.team_summe.sla_n) }}</td>
                   <td class="py-2 px-3 text-right">{{ data.team_summe.antworten }}</td>
                   <td class="py-2 px-3 text-right">{{ data.team_summe.kommentare }}</td>
-                  <td class="py-2 px-3 text-right">{{ std(data.team_summe.stunden) }}</td>
-                  <td class="py-2 px-3 text-right">{{ std(data.team_summe.stunden_abrechenbar) }}</td>
                 </tr>
               </tfoot>
             </table>
@@ -272,8 +268,6 @@ const spalten = [
   { key: "sla_pct", label: "SLA %", hilfe: "Im Zeitraum gelöste Tickets mit erfüllter SLA ÷ gelöste mit SLA-Ergebnis" },
   { key: "antworten", label: "Antworten", hilfe: "Ausgehende E-Mails an Kunden im Zeitraum" },
   { key: "kommentare", label: "Kommentare", hilfe: "Interne Kommentare im Zeitraum" },
-  { key: "stunden", label: "Stunden", hilfe: "Erfasste Zeit (Timesheet) im Zeitraum" },
-  { key: "stunden_abrechenbar", label: "davon abr.", hilfe: "Zeitbuchungen mit Abrechnungsentscheidung „Abrechnen“" },
 ];
 const sortKey = ref("offen");
 const sortAsc = ref(false);
@@ -304,9 +298,6 @@ function zeit(avg: number | null, med: number | null, n: number) {
 }
 function pct(v: number | null, n: number) {
   return v == null ? "—" : `${v} % (${n})`;
-}
-function std(v: number) {
-  return v ? fmt(v) : "—";
 }
 function slaFarbe(v: number | null) {
   if (v == null) return "text-ink-gray-5";

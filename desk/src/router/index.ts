@@ -54,12 +54,6 @@ const routes = [
     },
   },
   {
-    path: "/my-time",
-    name: "MyTime",
-    component: () => import("@/pages/MeineZeiten.vue"),
-    meta: { auth: true },
-  },
-  {
     path: "/notifications",
     name: "Notifications",
     component: () => import("@/pages/MobileNotifications.vue"),
